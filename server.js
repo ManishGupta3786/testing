@@ -3,12 +3,14 @@ const app = express();
 const path = require('path');
 const fs = require('fs');
 const pdf = require('html-pdf');
+const puppeteer = require('puppeteer');
+
 
 app.use(express.static('./uploads'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-function createPdf ()  {
+async function createPdf ()  {
     const htmlContent = `<html>
     <head>
     </head>
@@ -222,13 +224,26 @@ function createPdf ()  {
     </body>
     </html>`;
     let outputPath = path.join(__dirname, './uploads/invoice.pdf');
-    const options = { format: 'Letter' };
-    pdf.create(htmlContent, options).toFile(outputPath, function(err, res) {
-        if (err) {
-            return console.log(err);
-        }
-        console.log('PDF created successfully at path :', outputPath);
-    });
+    // const options = { format: 'Letter' };
+    // pdf.create(htmlContent, options).toFile(outputPath, function(err, res) {
+    //     if (err) {
+    //         return console.log(err);
+    //     }
+    //     console.log('PDF created successfully at path :', outputPath);
+    // });
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    
+    // Set content to the page
+    await page.setContent(htmlContent);
+    
+    // Generate PDF
+    await page.pdf({ path: outputPath, format: 'A4' });
+
+    await browser.close();
+    console.log(`PDF created at ${outputPath}`);
+
 }
 
 createPdf();
